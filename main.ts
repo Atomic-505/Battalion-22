@@ -1,7 +1,6 @@
 // main.ts — Discord bot using FREE DeepSeek AI
 import { Client, GatewayIntentBits } from "npm:discord.js@14";
 
-client
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -11,16 +10,13 @@ const client = new Client({
 });
 
 client.on("ready", () => {
-  console.log(`Logged in as ${client.user.tag}!`);
+  console.log(`Logged in as ${client.user?.tag}!`);
 });
 
 client.on("messageCreate", async (msg) => {
   if (msg.author.bot) return;
 
-  const userMessage = msg.content;
-
   try {
-    // Call DeepSeek API
     const response = await fetch("https://api.deepseek.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -30,21 +26,23 @@ client.on("messageCreate", async (msg) => {
       body: JSON.stringify({
         model: "deepseek-chat",
         messages: [
-          { role: "user", content: userMessage }
+          { role: "user", content: msg.content }
         ]
       })
     });
 
     const data = await response.json();
+    const aiReply =
+      data?.choices?.[0]?.message?.content ??
+      "⚠️ The AI did not return a response.";
 
-    const aiReply = data.choices?.[0]?.message?.content || "Error: No response.";
-
-    msg.reply(aiReply);
+    await msg.reply(aiReply);
 
   } catch (err) {
     console.error(err);
-    msg.reply("There was an error contacting the AI service.");
+    await msg.reply("❌ Error contacting the AI service.");
   }
 });
 
 client.login(Deno.env.get("DISCORD_TOKEN"));
+
